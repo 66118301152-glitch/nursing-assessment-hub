@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#087eaf">
+  <title>Nursing Assessment Hub</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="navbar">
+    <a class="brand" href="#">
+      <div class="brand-icon">✚</div>
+      <div>
+        <strong>Nursing<span>Hub.</span></strong>
+        <small>CLINICAL ASSESSMENT PLATFORM</small>
+      </div>
+    </a>
+    <nav>
+      <a href="#home">Home</a>
+      <a href="#assessments">Assessments</a>
+      <a href="#about">About</a>
+    </nav>
+    <div class="nav-badge">Nursing Tools</div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero" id="home">
+      <div class="hero-content">
+        <div class="eyebrow">✦ SMART NURSING ASSESSMENT</div>
+        <h1>Better Assessment.<br><span>Better Patient Care.</span></h1>
+        <p>
+          ศูนย์รวมเครื่องมือประเมินทางการพยาบาล
+          เรียนรู้วิธีประเมิน คำนวณคะแนน
+          และแปลผลเบื้องต้นได้อย่างสะดวกในเว็บไซต์เดียว
+        </p>
+        <a class="primary-btn" href="#assessments">
+          Explore Assessments <span>↗</span>
+        </a>
+        <div class="hero-features">
+          <span>✓ Evidence-informed</span>
+          <span>✓ Easy to use</span>
+          <span>✓ No patient data saved</span>
+        </div>
+      </div>
+
+      <div class="hero-art" aria-hidden="true">
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+        <div class="medical-circle">
+          <svg viewBox="0 0 260 260" fill="none">
+            <path d="M130 218S35 156 35 94C35 42 98 24 130 75C162 24 225 42 225 94C225 156 130 218 130 218Z"
+              fill="#ffffff" fill-opacity=".15"
+              stroke="#ffffff" stroke-width="3"/>
+            <path d="M52 130H88L106 95L128 167L150 116L166 130H208"
+              stroke="#ffffff" stroke-width="6"
+              stroke-linecap="round"
+              stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="floating-label label-one">✚ Healthcare</div>
+        <div class="floating-label label-two">♡ Nursing Care</div>
+      </div>
+    </section>
+
+    <!-- Statistics -->
+    <section class="stats">
+      <div><strong>06</strong><span>Categories</span></div>
+      <div><strong>04</strong><span>Interactive Tools</span></div>
+      <div><strong>24/7</strong><span>Accessible</span></div>
+      <div><strong>0</strong><span>Patient Records Stored</span></div>
+    </section>
+
+    <!-- Categories -->
+    <section class="section" id="categories">
+      <div class="section-heading">
+        <div>
+          <span class="section-label">EXPLORE BY SPECIALTY</span>
+          <h2>Assessment Categories</h2>
+          <p>เลือกหมวดหมู่การประเมินที่ต้องการ</p>
+        </div>
+      </div>
+      <div class="category-grid" id="categoryGrid"></div>
+    </section>
+
+    <!-- Assessments -->
+    <section class="section assessment-section" id="assessments">
+      <div class="section-heading">
+        <div>
+          <span class="section-label">CLINICAL ASSESSMENT TOOLS</span>
+          <h2>Explore Assessments</h2>
+          <p>ค้นหาและเลือกเครื่องมือประเมินทางการพยาบาล</p>
+        </div>
+        <span id="resultCount" class="result-count"></span>
+      </div>
+
+      <div class="search-panel">
+        <div class="search-box">
+          <span>⌕</span>
+          <input id="searchInput" type="search"
+            placeholder="Search GCS, 7Ps, APGAR, BMI..."
+            aria-label="ค้นหาแบบประเมิน">
+        </div>
+        <div class="filter-buttons" id="filterButtons"></div>
+      </div>
+
+      <div class="assessment-grid" id="assessmentGrid"></div>
+      <p class="empty-state" id="emptyState" hidden>
+        ไม่พบเครื่องมือที่ตรงกับการค้นหา
+      </p>
+    </section>
+
+    <!-- About -->
+    <section class="about-section" id="about">
+      <div class="about-icon">♡</div>
+      <div>
+        <span class="section-label">ABOUT THIS PLATFORM</span>
+        <h2>Designed for Nursing Learning</h2>
+        <p>
+          Nursing Assessment Hub พัฒนาขึ้นเพื่อสนับสนุน
+          การเรียนรู้และฝึกทักษะการประเมินทางการพยาบาล
+          โดยมีคำอธิบายขั้นตอนและการแปลผลเบื้องต้น
+        </p>
+        <p class="disclaimer">
+          เครื่องมือนี้จัดทำเพื่อการศึกษา ไม่ใช้แทนการตัดสินใจ
+          ทางคลินิกหรือแนวทางปฏิบัติของสถานพยาบาล
+          ไม่ควรกรอกข้อมูลระบุตัวผู้ป่วยจริง
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Assessment dialog -->
+  <dialog id="assessmentDialog" class="assessment-dialog">
+    <div class="dialog-header">
+      <div>
+        <span class="section-label">INTERACTIVE ASSESSMENT</span>
+        <h2 id="dialogTitle"></h2>
+        <p id="dialogSubtitle"></p>
+      </div>
+      <button class="close-btn" id="closeDialog"
+        aria-label="ปิดหน้าต่าง">✕</button>
+    </div>
+
+    <div class="dialog-body">
+      <div id="assessmentContent"></div>
+      <div id="assessmentResult" class="assessment-result"
+        aria-live="polite"></div>
+    </div>
+
+    <div class="dialog-actions">
+      <button id="resetAssessment" class="outline-btn">
+        ↺ เริ่มประเมินใหม่
+      </button>
+      <button id="calculateAssessment" class="primary-btn">
+        สรุปผลการประเมิน →
+      </button>
+    </div>
+  </dialog>
+
+  <footer>
+    <strong>Nursing<span>Hub.</span></strong>
+    <p>Clinical Assessment & Nursing Education</p>
+    <small>© 2026 Nursing Assessment Hub · Educational Use Only</small>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
