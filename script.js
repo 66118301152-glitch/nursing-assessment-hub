@@ -485,6 +485,104 @@ function calculate7Ps() {
 // ===== APGAR =====
 
 
+const apgarQuestions = [
+  {
+    id: "appearance",
+    title: "Appearance — สีผิว",
+    options: [
+      { value: 0, label: "0 — ซีดหรือเขียวทั่วตัว" },
+      { value: 1, label: "1 — ลำตัวชมพู ปลายมือปลายเท้าเขียว" },
+      { value: 2, label: "2 — สีผิวชมพูทั่วตัว" }
+    ],
+    guide: [
+      "สังเกตสีผิวบริเวณลำตัวและปลายมือปลายเท้า",
+      "พิจารณาข้อจำกัดของการประเมินสีผิวร่วมด้วย"
+    ]
+  },
+  {
+    id: "pulse",
+    title: "Pulse — อัตราการเต้นหัวใจ",
+    options: [
+      { value: 0, label: "0 — ไม่มีการเต้นของหัวใจ" },
+      { value: 1, label: "1 — หัวใจเต้นน้อยกว่า 100 ครั้ง/นาที" },
+      { value: 2, label: "2 — หัวใจเต้นตั้งแต่ 100 ครั้ง/นาทีขึ้นไป" }
+    ],
+    guide: [
+      "ประเมินอัตราการเต้นหัวใจด้วยวิธีที่เหมาะสมตามแนวทางการดูแลทารกแรกเกิด"
+    ]
+  },
+  {
+    id: "grimace",
+    title: "Grimace — การตอบสนองต่อสิ่งกระตุ้น",
+    options: [
+      { value: 0, label: "0 — ไม่ตอบสนอง" },
+      { value: 1, label: "1 — แสดงสีหน้าหรือขยับเล็กน้อย" },
+      { value: 2, label: "2 — ร้อง ไอ หรือจามเมื่อกระตุ้น" }
+    ],
+    guide: [
+      "สังเกตปฏิกิริยาตอบสนองต่อการกระตุ้นที่เหมาะสม"
+    ]
+  },
+  {
+    id: "activity",
+    title: "Activity — ความตึงตัวของกล้ามเนื้อ",
+    options: [
+      { value: 0, label: "0 — กล้ามเนื้ออ่อนปวกเปียก" },
+      { value: 1, label: "1 — งอแขนขาบางส่วน" },
+      { value: 2, label: "2 — เคลื่อนไหวแข็งแรง" }
+    ],
+    guide: [
+      "สังเกตความตึงตัวของกล้ามเนื้อและการเคลื่อนไหวของแขนขา"
+    ]
+  },
+  {
+    id: "respiration",
+    title: "Respiration — การหายใจ",
+    options: [
+      { value: 0, label: "0 — ไม่หายใจ" },
+      { value: 1, label: "1 — หายใจช้าหรือไม่สม่ำเสมอ ร้องเบา" },
+      { value: 2, label: "2 — หายใจดี ร้องเสียงดัง" }
+    ],
+    guide: [
+      "สังเกตการหายใจ ความสม่ำเสมอ และการร้องของทารก"
+    ]
+  }
+];
+
+function renderAPGAR() {
+  assessmentContent.innerHTML = `
+    <div class="question">
+      <h3>ช่วงเวลาที่ประเมิน (Assessment Time)</h3>
+      <p>เลือกเวลาหลังคลอดที่ทำการประเมิน APGAR Score</p>
+      <select id="apgarTime">
+        <option value="1">1 นาทีหลังคลอด</option>
+        <option value="5">5 นาทีหลังคลอด</option>
+        <option value="10">10 นาทีหลังคลอด</option>
+        <option value="15">15 นาทีหลังคลอด</option>
+        <option value="20">20 นาทีหลังคลอด</option>
+      </select>
+    </div>
+
+    ${apgarQuestions.map(q =>
+      selectQuestion(
+        q.id,
+        q.title,
+        "เลือกผลการประเมินที่ตรงกับสภาพทารก",
+        q.options,
+        q.guide
+      )
+    ).join("")}
+
+    <p class="disclaimer">
+      <strong>ข้อควรระวัง:</strong>
+      APGAR Score เป็นเครื่องมือประเมินและบันทึกสภาพ
+      ทารกแรกเกิด ไม่สามารถใช้คะแนนเพียงอย่างเดียว
+      เพื่อวินิจฉัย Birth Asphyxia ได้
+      และไม่ควรชะลอการช่วยกู้ชีพเพื่อรอผล APGAR
+    </p>
+  `;
+}
+
 function calculateAPGAR() {
   const ids = apgarQuestions.map(q => q.id);
 
