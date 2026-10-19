@@ -484,76 +484,6 @@ function calculate7Ps() {
 
 // ===== APGAR =====
 
-const apgarQuestions = [
-  {
-    id: "appearance", title: "Appearance — สีผิว",
-    options: [
-      { value: 0, label: "0 — ซีดหรือเขียวทั่วตัว" },
-      { value: 1, label: "1 — ลำตัวชมพู ปลายมือปลายเท้าเขียว" },
-      { value: 2, label: "2 — สีผิวชมพูทั่วตัว" }
-    ],
-    guide: ["สังเกตสีผิวและการไหลเวียนของทารก"]
-  },
-  {
-    id: "pulse", title: "Pulse — อัตราการเต้นหัวใจ",
-    options: [
-      { value: 0, label: "0 — ไม่มีการเต้นของหัวใจ" },
-      { value: 1, label: "1 — น้อยกว่า 100 ครั้ง/นาที" },
-      { value: 2, label: "2 — ตั้งแต่ 100 ครั้ง/นาทีขึ้นไป" }
-    ],
-    guide: ["ประเมินอัตราการเต้นหัวใจด้วยวิธีที่เหมาะสมตามแนวทางการช่วยเหลือทารกแรกเกิด"]
-  },
-  {
-    id: "grimace", title: "Grimace — การตอบสนองต่อสิ่งกระตุ้น",
-    options: [
-      { value: 0, label: "0 — ไม่ตอบสนอง" },
-      { value: 1, label: "1 — แสดงสีหน้าหรือขยับเล็กน้อย" },
-      { value: 2, label: "2 — ร้อง ไอ หรือจามเมื่อกระตุ้น" }
-    ],
-    guide: ["สังเกตการตอบสนองต่อการกระตุ้นที่เหมาะสม"]
-  },
-  {
-    id: "activity", title: "Activity — Muscle Tone",
-    options: [
-      { value: 0, label: "0 — อ่อนปวกเปียก" },
-      { value: 1, label: "1 — งอแขนขาบางส่วน" },
-      { value: 2, label: "2 — เคลื่อนไหวแข็งแรง" }
-    ],
-    guide: ["สังเกตท่าทาง การงอแขนขา และการเคลื่อนไหว"]
-  },
-  {
-    id: "respiration", title: "Respiration — การหายใจ",
-    options: [
-      { value: 0, label: "0 — ไม่หายใจ" },
-      { value: 1, label: "1 — หายใจช้าหรือไม่สม่ำเสมอ ร้องเบา" },
-      { value: 2, label: "2 — หายใจดี ร้องเสียงดัง" }
-    ],
-    guide: ["ประเมินการหายใจ ความสม่ำเสมอ และการร้อง"]
-  }
-];
-
-function renderAPGAR() {
-  assessmentContent.innerHTML = `
-    <div class="question">
-      <h3>ช่วงเวลาที่ประเมิน</h3>
-      <p>เลือกเวลาหลังคลอด</p>
-      <select id="apgarTime">
-        <option value="1">1 นาที</option>
-        <option value="5">5 นาที</option>
-        <option value="10">10 นาที</option>
-        <option value="15">15 นาที</option>
-        <option value="20">20 นาที</option>
-      </select>
-    </div>
-    ${apgarQuestions.map(q =>
-      selectQuestion(q.id,q.title,"เลือกค่าที่ประเมินได้",q.options,q.guide)
-    ).join("")}
-    <p class="disclaimer">
-      APGAR เป็นการบันทึกสภาพทารกตามเวลา
-      ไม่ใช้ตัดสินใจเริ่มหรือชะลอการช่วยกู้ชีพทารกแรกเกิด
-    </p>
-  `;
-}
 
 function calculateAPGAR() {
   const ids = apgarQuestions.map(q => q.id);
@@ -563,23 +493,108 @@ function calculateAPGAR() {
     return;
   }
 
-  const total = ids.reduce((sum,id) =>
-    sum + Number(getValue(id)),0
+  const total = ids.reduce(
+    (sum, id) => sum + Number(getValue(id)), 0
   );
 
-  const time = getValue("apgarTime");
-  const interpretation =
-    total >= 7 ? "คะแนนอยู่ในช่วง 7–10" :
-    total >= 4 ? "คะแนนอยู่ในช่วง 4–6" :
-    "คะแนนอยู่ในช่วง 0–3";
+  const time = Number(getValue("apgarTime"));
 
-  renderResult(
-    `APGAR Score — ${time} นาที`,
-    `${total} / 10`,
-    `${interpretation} ควรพิจารณาร่วมกับสภาพทางคลินิกและการตอบสนองต่อการดูแลของทารก`,
-    total < 7,
-    "<p>หากคะแนนต่ำหรือทารกมีอาการผิดปกติ ให้ดำเนินการตามแนวทางช่วยเหลือทารกแรกเกิดทันที โดยไม่รอคะแนน APGAR</p>"
-  );
+  let interpretation = "";
+  let explanation = "";
+  let color = "";
+  let background = "";
+  let recommendation = "";
+
+  if (total >= 7) {
+    interpretation = "Reassuring";
+    explanation = "คะแนนอยู่ในช่วงน่าพอใจ (7–10 คะแนน)";
+    color = "#15803d";
+    background = "#edf9f0";
+
+    recommendation =
+      "ติดตามการหายใจ อัตราการเต้นของหัวใจ " +
+      "อุณหภูมิ และสภาพทั่วไปของทารกตามแนวทางหน่วยงาน";
+
+  } else if (total >= 4) {
+    interpretation = "Moderately Abnormal";
+    explanation = "คะแนนผิดปกติระดับปานกลาง (4–6 คะแนน)";
+    color = "#b76a07";
+    background = "#fff5e6";
+
+    recommendation =
+      "ประเมินสภาพทารกอย่างใกล้ชิด " +
+      "โดยเฉพาะการหายใจและอัตราการเต้นของหัวใจ " +
+      "และดำเนินการช่วยเหลือตามแนวทางการกู้ชีพทารกแรกเกิด";
+
+  } else {
+    interpretation = "Low APGAR Score";
+    explanation = "คะแนนต่ำผิดปกติรุนแรง (0–3 คะแนน)";
+    color = "#c52f35";
+    background = "#fff0f0";
+
+    recommendation =
+      "ทารกมีคะแนนต่ำมาก ต้องประเมินและช่วยเหลือ " +
+      "ตามแนวทางการกู้ชีพทารกแรกเกิดทันที " +
+      "โดยไม่รอผล APGAR เพื่อเริ่มการช่วยเหลือ";
+  }
+
+  const followUp =
+    time >= 5 && total < 7
+      ? "คะแนนต่ำกว่า 7 ที่นาทีที่ 5 หรือหลังจากนั้น " +
+        "ควรประเมิน APGAR ซ้ำทุก 5 นาที จนถึง 20 นาทีหลังคลอด"
+      : time === 1
+      ? "ควรบันทึก APGAR อีกครั้งเมื่อครบ 5 นาทีหลังคลอด"
+      : "ติดตามอาการและบันทึกการประเมินตามข้อบ่งชี้";
+
+  assessmentResult.innerHTML = `
+    <div class="apgar-result-card"
+         style="--apgar-color:${color};
+                --apgar-bg:${background}">
+
+      <div class="apgar-result-heading">
+        APGAR SCORE INTERPRETATION
+      </div>
+
+      <div class="apgar-score-display">
+        ${total}<span> / 10</span>
+      </div>
+
+      <div class="apgar-result-title">
+        ${interpretation}
+      </div>
+
+      <p><strong>${explanation}</strong></p>
+
+      <div class="apgar-result-detail">
+        <p><strong>เวลาที่ประเมิน:</strong> ${time} นาทีหลังคลอด</p>
+
+        <p><strong>แนวทางการดูแล:</strong><br>
+          ${recommendation}
+        </p>
+
+        <p><strong>การติดตาม:</strong><br>
+          ${followUp}
+        </p>
+      </div>
+
+      <div class="apgar-caution">
+        <strong>Birth Asphyxia — Clinical Consideration</strong>
+        <p>
+          APGAR Score ต่ำอาจพบร่วมกับภาวะ Birth Asphyxia
+          แต่ไม่สามารถวินิจฉัยภาวะดังกล่าว
+          หรือระบุความรุนแรงได้จากคะแนนเพียงอย่างเดียว
+          ต้องพิจารณาข้อมูลทางคลินิกและการตรวจเพิ่มเติม
+          เช่น Umbilical arterial blood gas ตามข้อบ่งชี้
+        </p>
+      </div>
+
+    </div>
+  `;
+
+  assessmentResult.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest"
+  });
 }
 
 // ===== BMI =====
