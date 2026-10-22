@@ -76,7 +76,17 @@ const tools = [
     name: "Timed Up and Go Test", short: "TUGT",
     description: "บันทึกผลการทดสอบการลุกขึ้นและเดิน",
     active: false
-  }
+  },
+  
+{
+  id: "obstetric",
+  category: "maternal",
+  icon: "📅",
+  name: "Obstetric Calculator",
+  short: "LMP · EDC · Gestational Age",
+  description: "คำนวณวันกำหนดคลอด อายุครรภ์ และประจำเดือนครั้งสุดท้าย",
+  active: true
+}
 ];
 
 // ===== DOM ELEMENTS =====
@@ -1189,6 +1199,322 @@ function calculateNEWS2() {
   });
 }
 
+// ============================================
+// OBSTETRIC CALCULATOR - LMP / EDC / GA
+// ============================================
+
+const OB_DAY_MS = 24 * 60 * 60 * 1000;
+
+// Use UTC to avoid daylight-saving/timezone errors.
+function obParseDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+
+  const [y, m, d] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+
+  if (
+    date.getUTCFullYear() !== y ||
+    date.getUTCMonth() !== m - 1 ||
+    date.getUTCDate() !== d
+  ) return null;
+
+  return date;
+}
+
+function obAddDays(date, days) {
+  return new Date(date.getTime() + days * OB_DAY_MS);
+}
+
+function obDaysBetween(start, end) {
+  return Math.round(
+    (end.getTime() - start.getTime()) / OB_DAY_MS
+  );
+}
+
+function obFormatDate(date) {
+  return new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC"
+  }).format(date);
+}
+
+function obFormatGA(days) {
+  const weeks = Math.floor(days / 7);
+  const remaining = days % 7;
+  return `${weeks} สัปดาห์ ${remaining} วัน (${weeks}+${remaining} weeks)`;
+}
+
+function obDateInput(id, title, description) {
+  return `
+    <div class="question">
+      <h3>${title}</h3>
+      <p>${description}</p>
+      <input type="date" id="${id}">
+    </div>
+  `;
+}
+
+function obError(message) {
+  renderResult(
+    "ไม่สามารถคำนวณได้",
+    "—",
+    message,
+    true
+  );
+}
+
+function renderObstetric() {
+  assessmentContent.innerHTML = `
+    <div class="ob-hero">
+      <div class="ob-hero-icon">🤰</div>
+      <div>
+        <strong>Obstetric Calculator</strong>
+        <p>Pregnancy Dating · LMP · EDC · GA</p>
+      </div>
+    </div>
+
+    <div class="question">
+      <h3>เลือกประเภทการคำนวณ</h3>
+      <select id="obMode">
+        <option value="lmp-edc">LMP → EDC</option>
+        <option value="edc-lmp">EDC → LMP</option>
+        <option value="lmp-ga">LMP → Gestational Age</option>
+        <option value="ga-edc">GA ณ วันที่ตรวจ → LMP / EDC</option>
+      </select>
+    </div>
+
+    <div id="obFields"></div>
+
+    <div class="ob-formula">
+      <strong>📖 หลักการคำนวณ</strong>
+      <p>
+        EDC = LMP + 280 วัน<br>
+        LMP = EDC − 280 วัน<br>
+        GA = จำนวนวันนับจาก LMP ถึงวันที่ประเมิน
+      </p>
+    </div>
+
+    <p class="disclaimer">
+      ผลเป็นการประมาณเบื้องต้นสำหรับรอบเดือน 28 วัน
+      ควรตรวจสอบอายุครรภ์และ EDC กับการประเมิน
+      ทางสูติกรรมและ Ultrasound ที่เหมาะสม
+      โดยเฉพาะเมื่อจำ LMP ไม่แน่นอนหรือรอบเดือนไม่สม่ำเสมอ
+    </p>
+  `;
+
+  const mode = document.getElementById("obMode");
+
+  mode.addEventListener("change", () => {
+    obRenderFields();
+    assessmentResult.innerHTML = "";
+  });
+
+  obRenderFields();
+}
+
+function obRenderFields() {
+  const mode = document.getElementById("obMode").value;
+  const fields = document.getElementById("obFields");
+
+  let html = "";
+
+  if (mode === "lmp-edc") {
+    html = obDateInput(
+      "obLMP",
+      "Last Menstrual Period (LMP)",
+      "เลือกวันแรกของประจำเดือนครั้งสุดท้าย"
+    );
+  }
+
+  if (mode === "edc-lmp") {
+    html = obDateInput(
+      "obEDC",
+      "Estimated Date of Confinement (EDC)",
+      "เลือกวันกำหนดคลอด"
+    );
+  }
+
+  if (mode === "lmp-ga") {
+    html =
+      obDateInput(
+        "obLMP",
+        "Last Menstrual Period",
+        "เลือกวันแรกของประจำเดือนครั้งสุดท้าย"
+      ) +
+      obDateInput(
+        "obAssessmentDate",
+        "Assessment Date",
+        "เลือกวันที่ต้องการทราบอายุครรภ์"
+      );
+  }
+
+  if (mode === "ga-edc") {
+    html = `
+      ${obDateInput(
+        "obAssessmentDate",
+        "Assessment Date",
+        "วันที่ทราบอายุครรภ์ เช่น วันที่ตรวจ Ultrasound"
+      )}
+
+      <div class="ob-ga-grid">
+        <div class="question">
+          <h3>Gestational Weeks</h3>
+          <p>อายุครรภ์ (สัปดาห์)</p>
+          <input id="obWeeks" type="number"
+            min="0" max="44" step="1" placeholder="เช่น 32">
+        </div>
+
+        <div class="question">
+          <h3>Additional Days</h3>
+          <p>จำนวนวันเพิ่มเติม (0–6)</p>
+          <input id="obDays" type="number"
+            min="0" max="6" step="1" placeholder="เช่น 3">
+        </div>
+      </div>
+    `;
+  }
+
+  fields.innerHTML = html;
+}
+
+function obRenderResult(items, note) {
+  assessmentResult.innerHTML = `
+    <div class="ob-result">
+      <div class="ob-result-header">
+        <span>OBSTETRIC CALCULATION RESULT</span>
+        <h3>ผลการคำนวณ</h3>
+      </div>
+
+      <div class="ob-result-grid">
+        ${items.map(item => `
+          <div class="ob-result-item">
+            <span>${item.label}</span>
+            <strong>${item.value}</strong>
+          </div>
+        `).join("")}
+      </div>
+
+      <div class="ob-result-note">
+        <strong>Clinical Note</strong>
+        <p>${note}</p>
+      </div>
+    </div>
+  `;
+
+  assessmentResult.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest"
+  });
+}
+
+function calculateObstetric() {
+  const mode = document.getElementById("obMode").value;
+
+  if (mode === "lmp-edc" || mode === "lmp-ga") {
+    const lmp = obParseDate(getValue("obLMP"));
+
+    if (!lmp) {
+      obError("กรุณาเลือกวันที่ LMP ให้ถูกต้อง");
+      return;
+    }
+
+    const edc = obAddDays(lmp, 280);
+
+    if (mode === "lmp-edc") {
+      obRenderResult([
+        { label: "LMP", value: obFormatDate(lmp) },
+        { label: "EDC / EDD", value: obFormatDate(edc) },
+        { label: "Pregnancy Duration", value: "40 สัปดาห์" }
+      ], "คำนวณจาก LMP + 280 วัน สำหรับรอบเดือนประมาณ 28 วัน");
+      return;
+    }
+
+    const assessmentDate = obParseDate(
+      getValue("obAssessmentDate")
+    );
+
+    if (!assessmentDate) {
+      obError("กรุณาเลือกวันที่ประเมินให้ถูกต้อง");
+      return;
+    }
+
+    const gaDays = obDaysBetween(lmp, assessmentDate);
+
+    if (gaDays < 0 || gaDays > 308) {
+      obError(
+        "วันที่ประเมินต้องไม่น้อยกว่า LMP และอายุครรภ์ต้องอยู่ในช่วง 0–44 สัปดาห์"
+      );
+      return;
+    }
+
+    obRenderResult([
+      { label: "LMP", value: obFormatDate(lmp) },
+      { label: "Assessment Date", value: obFormatDate(assessmentDate) },
+      { label: "Gestational Age", value: obFormatGA(gaDays) },
+      { label: "EDC / EDD", value: obFormatDate(edc) }
+    ], "อายุครรภ์คำนวณจากจำนวนวันที่ผ่านไปนับตั้งแต่วันแรกของ LMP");
+    return;
+  }
+
+  if (mode === "edc-lmp") {
+    const edc = obParseDate(getValue("obEDC"));
+
+    if (!edc) {
+      obError("กรุณาเลือกวันที่ EDC ให้ถูกต้อง");
+      return;
+    }
+
+    const lmp = obAddDays(edc, -280);
+
+    obRenderResult([
+      { label: "EDC / EDD", value: obFormatDate(edc) },
+      { label: "Estimated LMP", value: obFormatDate(lmp) },
+      { label: "Pregnancy Duration", value: "40 สัปดาห์" }
+    ], "LMP นี้เป็นวันที่คำนวณย้อนกลับจาก EDC ไม่ใช่การยืนยันประวัติประจำเดือนจริง");
+    return;
+  }
+
+  if (mode === "ga-edc") {
+    const date = obParseDate(getValue("obAssessmentDate"));
+    const weeksRaw = getValue("obWeeks");
+    const daysRaw = getValue("obDays");
+
+    if (!date || weeksRaw === "" || daysRaw === "") {
+      obError("กรุณาระบุวันที่ตรวจ อายุครรภ์เป็นสัปดาห์และวันให้ครบ");
+      return;
+    }
+
+    const weeks = Number(weeksRaw);
+    const days = Number(daysRaw);
+
+    if (
+      !Number.isInteger(weeks) ||
+      !Number.isInteger(days) ||
+      weeks < 0 ||
+      weeks > 44 ||
+      days < 0 ||
+      days > 6 ||
+      weeks * 7 + days > 308
+    ) {
+      obError("อายุครรภ์ต้องเป็นจำนวนเต็ม 0–44 สัปดาห์ และ 0–6 วัน โดยรวมไม่เกิน 44 สัปดาห์");
+      return;
+    }
+
+    const gaDays = weeks * 7 + days;
+    const lmp = obAddDays(date, -gaDays);
+    const edc = obAddDays(lmp, 280);
+
+    obRenderResult([
+      { label: "Assessment Date", value: obFormatDate(date) },
+      { label: "Gestational Age", value: obFormatGA(gaDays) },
+      { label: "Estimated LMP", value: obFormatDate(lmp) },
+      { label: "Estimated EDC", value: obFormatDate(edc) }
+    ], "คำนวณจากอายุครรภ์ที่กำหนด ณ วันที่ตรวจ โดยถือว่า EDC เท่ากับอายุครรภ์ 40 สัปดาห์");
+  }
+}
+
 // ===== DIALOG CONTROL =====
 
 function renderCurrentAssessment() {
@@ -1199,6 +1525,7 @@ function renderCurrentAssessment() {
   if (currentTool === "apgar") renderAPGAR();
   if (currentTool === "bmi") renderBMI();
   if (currentTool === "news2") renderNEWS2();
+  if (currentTool === "obstetric") renderObstetric();
 }
 
 function openAssessment(id) {
@@ -1229,6 +1556,7 @@ document.getElementById("calculateAssessment")
     if (currentTool === "apgar") calculateAPGAR();
     if (currentTool === "bmi") calculateBMI();
     if (currentTool === "news2") calculateNEWS2();
+    if (currentTool === "obstetric") calculateObstetric();
   });
 
 
