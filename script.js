@@ -57,7 +57,7 @@ const tools = [
     id: "news2", category: "critical", icon: "📈",
     name: "NEWS2", short: "Early Warning Score",
     description: "เฝ้าระวังการเปลี่ยนแปลงของสัญญาณชีพ",
-    active: false
+    active: true
   },
   {
     id: "latch", category: "maternal", icon: "🍼",
@@ -747,6 +747,448 @@ function calculateBMI() {
   );
 }
 
+// =============================================
+// NEWS2 - National Early Warning Score 2
+// =============================================
+
+// 1. Assessment form
+function renderNEWS2() {
+  assessmentContent.innerHTML = `
+    <div class="news2-intro">
+      <strong>National Early Warning Score 2</strong>
+      <p>
+        เครื่องมือประเมินความเสี่ยงต่อการทรุดลงของผู้ป่วย
+        จากสัญญาณชีพและระดับความรู้สึกตัว
+      </p>
+      <p>
+        ใช้สำหรับผู้ป่วยอายุตั้งแต่ 16 ปีขึ้นไป
+        ในบริบททางคลินิกที่เหมาะสม
+        ไม่ใช้สำหรับหญิงตั้งครรภ์หรือเด็ก
+      </p>
+    </div>
+
+    <div class="question">
+      <h3>1. Respiratory Rate (RR)</h3>
+      <p>อัตราการหายใจ (ครั้ง/นาที)</p>
+      <input
+        type="number"
+        id="newsRR"
+        min="1"
+        max="100"
+        step="1"
+        placeholder="เช่น 18"
+      >
+      <details>
+        <summary>📖 วิธีประเมิน Respiratory Rate</summary>
+        <ul>
+          <li>จัดให้ผู้ป่วยอยู่ในท่าที่เหมาะสม</li>
+          <li>สังเกตการเคลื่อนไหวของทรวงอกหรือหน้าท้อง</li>
+          <li>นับการหายใจเข้าและออกเป็น 1 ครั้ง</li>
+          <li>นับให้ครบ 1 นาที</li>
+          <li>สังเกตความลึก จังหวะ และการใช้กล้ามเนื้อช่วยหายใจ</li>
+        </ul>
+      </details>
+    </div>
+
+    <div class="question">
+      <h3>2. Oxygen Saturation (SpO₂)</h3>
+      <p>ความอิ่มตัวของออกซิเจนในเลือด (%)</p>
+      <input
+        type="number"
+        id="newsSpO2"
+        min="0"
+        max="100"
+        step="1"
+        placeholder="เช่น 98"
+      >
+      <details>
+        <summary>📖 วิธีประเมิน SpO₂</summary>
+        <ul>
+          <li>ใช้เครื่อง Pulse Oximeter ที่เหมาะสม</li>
+          <li>ตรวจสอบตำแหน่ง Probe และคุณภาพของสัญญาณ</li>
+          <li>รอให้ค่าคงที่ก่อนบันทึกผล</li>
+          <li>พิจารณาการไหลเวียนเลือดส่วนปลาย การเคลื่อนไหว และปัจจัยที่รบกวนการวัด</li>
+          <li>ประเมินอาการของผู้ป่วยร่วมกับค่าที่วัดได้</li>
+        </ul>
+      </details>
+    </div>
+
+    <div class="question">
+      <h3>3. SpO₂ Scale</h3>
+      <p>เลือกเกณฑ์ SpO₂ ที่เหมาะสมกับผู้ป่วย</p>
+      <select id="newsScale">
+        <option value="1">Scale 1 — ผู้ป่วยทั่วไป</option>
+        <option value="2">Scale 2 — เป้าหมาย SpO₂ 88–92% ที่ได้รับการกำหนดโดยผู้มีคุณสมบัติเหมาะสม</option>
+      </select>
+      <details>
+        <summary>📖 วิธีเลือก SpO₂ Scale</summary>
+        <ul>
+          <li>Scale 1: ใช้กับผู้ป่วยส่วนใหญ่</li>
+          <li>Scale 2: ใช้เมื่อมีภาวะ Hypercapnic Respiratory Failure ที่ยืนยันแล้ว และมีคำสั่งใช้เป้าหมาย SpO₂ 88–92%</li>
+          <li>ห้ามเลือก Scale 2 จากการเป็น COPD เพียงอย่างเดียว</li>
+          <li>หากไม่แน่ใจ ต้องตรวจสอบแผนการรักษาก่อน</li>
+        </ul>
+      </details>
+    </div>
+
+    <div class="question">
+      <h3>4. Supplemental Oxygen</h3>
+      <p>ผู้ป่วยกำลังได้รับออกซิเจนเสริมหรือไม่</p>
+      <select id="newsOxygen">
+        <option value="">-- เลือก --</option>
+        <option value="air">Room Air — ไม่ได้รับออกซิเจนเสริม</option>
+        <option value="oxygen">Supplemental Oxygen — ได้รับออกซิเจนเสริม</option>
+      </select>
+      <details>
+        <summary>📖 วิธีประเมิน Oxygen Supplementation</summary>
+        <ul>
+          <li>ตรวจสอบว่าผู้ป่วยหายใจด้วย Room Air หรือได้รับออกซิเจนเสริม</li>
+          <li>Supplemental Oxygen ให้ 2 คะแนน</li>
+          <li>Room Air ให้ 0 คะแนน</li>
+          <li>หากได้รับออกซิเจน ให้บันทึกอุปกรณ์และอัตราการไหลในเวชระเบียนตามแนวทางหน่วยงาน</li>
+        </ul>
+      </details>
+    </div>
+
+    <div class="question">
+      <h3>5. Systolic Blood Pressure (SBP)</h3>
+      <p>ความดันโลหิตตัวบน (mmHg)</p>
+      <input
+        type="number"
+        id="newsSBP"
+        min="1"
+        max="350"
+        step="1"
+        placeholder="เช่น 120"
+      >
+      <details>
+        <summary>📖 วิธีประเมิน Blood Pressure</summary>
+        <ul>
+          <li>ให้ผู้ป่วยอยู่ในท่าที่เหมาะสม</li>
+          <li>เลือกขนาดผ้าพันแขนที่เหมาะสม</li>
+          <li>วัดความดันโลหิตด้วยเครื่องมือที่ได้มาตรฐาน</li>
+          <li>NEWS2 ใช้ค่าความดันตัวบน (Systolic BP)</li>
+          <li>หากค่าผิดปกติ ให้ตรวจสอบความถูกต้องและประเมินอาการร่วมด้วย</li>
+        </ul>
+      </details>
+    </div>
+
+    <div class="question">
+      <h3>6. Pulse Rate (PR)</h3>
+      <p>อัตราการเต้นของหัวใจ (ครั้ง/นาที)</p>
+      <input
+        type="number"
+        id="newsPulse"
+        min="1"
+        max="250"
+        step="1"
+        placeholder="เช่น 80"
+      >
+      <details>
+        <summary>📖 วิธีประเมิน Pulse Rate</summary>
+        <ul>
+          <li>คลำชีพจร Radial หรือประเมินด้วยเครื่องมือที่เหมาะสม</li>
+          <li>นับชีพจรเต็ม 1 นาที โดยเฉพาะเมื่อจังหวะไม่สม่ำเสมอ</li>
+          <li>ประเมินอัตรา จังหวะ และความแรงของชีพจร</li>
+          <li>บันทึกค่าที่วัดได้เป็นครั้ง/นาที</li>
+        </ul>
+      </details>
+    </div>
+
+    <div class="question">
+      <h3>7. Body Temperature</h3>
+      <p>อุณหภูมิร่างกาย (°C)</p>
+      <input
+        type="number"
+        id="newsTemp"
+        min="25"
+        max="45"
+        step="0.1"
+        placeholder="เช่น 37.0"
+      >
+      <details>
+        <summary>📖 วิธีประเมิน Temperature</summary>
+        <ul>
+          <li>วัดอุณหภูมิด้วยเครื่องมือที่เหมาะสม</li>
+          <li>ใช้ตำแหน่งวัดตามแนวทางของหน่วยงาน</li>
+          <li>ตรวจสอบหน่วยว่าเป็นองศาเซลเซียส</li>
+          <li>บันทึกผลอย่างน้อย 1 ตำแหน่งทศนิยม</li>
+        </ul>
+      </details>
+    </div>
+
+    <div class="question">
+      <h3>8. Level of Consciousness (ACVPU)</h3>
+      <p>ระดับความรู้สึกตัวและอาการสับสนที่เกิดขึ้นใหม่</p>
+      <select id="newsConsciousness">
+        <option value="">-- เลือก --</option>
+        <option value="0">A — Alert (รู้สึกตัวดี ไม่มีสับสนใหม่)</option>
+        <option value="3">C — New Confusion (สับสนเกิดขึ้นใหม่)</option>
+        <option value="3">V — Response to Voice</option>
+        <option value="3">P — Response to Pain</option>
+        <option value="3">U — Unresponsive</option>
+      </select>
+      <details>
+        <summary>📖 วิธีประเมิน ACVPU</summary>
+        <ul>
+          <li>A: ผู้ป่วยตื่นและตอบสนองเหมาะสม ไม่มีภาวะสับสนที่เกิดขึ้นใหม่</li>
+          <li>C: มีอาการสับสนเกิดขึ้นใหม่เมื่อเทียบกับสภาพเดิม</li>
+          <li>V: ตอบสนองเมื่อเรียกด้วยเสียง</li>
+          <li>P: ตอบสนองต่อการกระตุ้นด้วยความเจ็บปวดที่เหมาะสม</li>
+          <li>U: ไม่ตอบสนอง</li>
+        </ul>
+      </details>
+    </div>
+
+    <p class="disclaimer">
+      NEWS2 เป็นเครื่องมือช่วยเฝ้าระวัง ไม่ใช่เครื่องมือวินิจฉัย
+      หากผู้ป่วยมีอาการทรุดลง ต้องประเมินและตอบสนองทันที
+      โดยไม่รอคะแนน NEWS2
+    </p>
+  `;
+}
+
+// =============================================
+// 2. NEWS2 Scoring Functions
+// =============================================
+
+function newsRRScore(x) {
+  if (x <= 8) return 3;
+  if (x <= 11) return 1;
+  if (x <= 20) return 0;
+  if (x <= 24) return 2;
+  return 3;
+}
+
+function newsSpO2Score(x, scale, oxygen) {
+  if (scale === 1) {
+    if (x <= 91) return 3;
+    if (x <= 93) return 2;
+    if (x <= 95) return 1;
+    return 0;
+  }
+
+  // Scale 2
+  if (x <= 83) return 3;
+  if (x <= 85) return 2;
+  if (x <= 87) return 1;
+  if (x <= 92) return 0;
+
+  // Above 92%: differs on air vs oxygen
+  if (!oxygen) return 0;
+
+  if (x <= 94) return 1;
+  if (x <= 96) return 2;
+  return 3;
+}
+
+function newsSBPScore(x) {
+  if (x <= 90) return 3;
+  if (x <= 100) return 2;
+  if (x <= 110) return 1;
+  if (x <= 219) return 0;
+  return 3;
+}
+
+function newsPulseScore(x) {
+  if (x <= 40) return 3;
+  if (x <= 50) return 1;
+  if (x <= 90) return 0;
+  if (x <= 110) return 1;
+  if (x <= 130) return 2;
+  return 3;
+}
+
+function newsTempScore(x) {
+  if (x <= 35.0) return 3;
+  if (x < 36.1) return 1;
+  if (x < 38.1) return 0;
+  if (x < 39.1) return 1;
+  return 2;
+}
+
+// =============================================
+// 3. Validate and Calculate NEWS2
+// =============================================
+
+function calculateNEWS2() {
+  const ids = [
+    "newsRR",
+    "newsSpO2",
+    "newsScale",
+    "newsOxygen",
+    "newsSBP",
+    "newsPulse",
+    "newsTemp",
+    "newsConsciousness"
+  ];
+
+  if (!requireAnswers(ids)) {
+    showIncomplete();
+    return;
+  }
+
+  const rr = Number(getValue("newsRR"));
+  const spo2 = Number(getValue("newsSpO2"));
+  const scale = Number(getValue("newsScale"));
+  const oxygen = getValue("newsOxygen") === "oxygen";
+  const sbp = Number(getValue("newsSBP"));
+  const pulse = Number(getValue("newsPulse"));
+  const temp = Number(getValue("newsTemp"));
+  const consciousness = Number(getValue("newsConsciousness"));
+
+  // Validate measurements before scoring
+  const validInteger = (x, min, max) =>
+    Number.isInteger(x) && x >= min && x <= max;
+
+  const valid =
+    validInteger(rr, 1, 100) &&
+    validInteger(spo2, 0, 100) &&
+    validInteger(sbp, 1, 350) &&
+    validInteger(pulse, 1, 250) &&
+    Number.isFinite(temp) &&
+    temp >= 25 && temp <= 45 &&
+    [1, 2].includes(scale) &&
+    [0, 3].includes(consciousness);
+
+  if (!valid) {
+    renderResult(
+      "ข้อมูลไม่ถูกต้อง",
+      "—",
+      "กรุณาตรวจสอบตัวเลขและหน่วยการวัดให้ถูกต้องทุกช่อง"
+    );
+    return;
+  }
+
+  const components = [
+    {
+      name: "Respiratory Rate",
+      value: `${rr} /min`,
+      score: newsRRScore(rr)
+    },
+    {
+      name: `SpO₂ (Scale ${scale})`,
+      value: `${spo2}%`,
+      score: newsSpO2Score(spo2, scale, oxygen)
+    },
+    {
+      name: "Supplemental Oxygen",
+      value: oxygen ? "Yes" : "No",
+      score: oxygen ? 2 : 0
+    },
+    {
+      name: "Systolic BP",
+      value: `${sbp} mmHg`,
+      score: newsSBPScore(sbp)
+    },
+    {
+      name: "Pulse Rate",
+      value: `${pulse} /min`,
+      score: newsPulseScore(pulse)
+    },
+    {
+      name: "Temperature",
+      value: `${temp.toFixed(1)} °C`,
+      score: newsTempScore(temp)
+    },
+    {
+      name: "ACVPU",
+      value: consciousness === 0 ? "Alert" : "Abnormal",
+      score: consciousness
+    }
+  ];
+
+  const total = components.reduce(
+    (sum, item) => sum + item.score, 0
+  );
+
+  const singleThree = components.some(
+    item => item.score === 3
+  );
+
+  let risk = "";
+  let advice = "";
+  let riskClass = "";
+
+  if (total >= 7) {
+    risk = "HIGH CLINICAL RISK";
+    riskClass = "news-high";
+    advice =
+      "ความเสี่ยงสูง ควรได้รับการประเมินและตอบสนองฉุกเฉิน " +
+      "โดยทีมที่มีสมรรถนะในการดูแลผู้ป่วยวิกฤตตามระบบของหน่วยงาน";
+  } else if (total >= 5) {
+    risk = "MEDIUM CLINICAL RISK";
+    riskClass = "news-medium";
+    advice =
+      "ความเสี่ยงปานกลาง ต้องประเมินอย่างเร่งด่วน " +
+      "เพิ่มการเฝ้าระวังและรายงานผู้รับผิดชอบตามแนวทางหน่วยงาน";
+  } else if (singleThree) {
+    risk = "LOW–MEDIUM RISK (SINGLE 3)";
+    riskClass = "news-medium";
+    advice =
+      "มีตัวแปรอย่างน้อยหนึ่งรายการได้ 3 คะแนน " +
+      "ควรได้รับการประเมินอย่างเร่งด่วนตามเกณฑ์ Single Parameter Trigger";
+  } else {
+    risk = "LOW CLINICAL RISK";
+    riskClass = "news-low";
+    advice =
+      "ความเสี่ยงต่ำตาม NEWS2 ในขณะประเมิน " +
+      "แต่ยังต้องติดตามอาการและสัญญาณชีพตามแผนการดูแล";
+  }
+
+  const rows = components.map(item => `
+    <div class="news-score-row">
+      <span>${item.name}<small> ${item.value}</small></span>
+      <strong>${item.score}</strong>
+    </div>
+  `).join("");
+
+  const redParameters = components
+    .filter(item => item.score === 3)
+    .map(item => item.name);
+
+  assessmentResult.innerHTML = `
+    <div class="news-result ${riskClass}">
+      <div class="news-result-heading">
+        NATIONAL EARLY WARNING SCORE 2
+      </div>
+
+      <div class="news-total-score">${total}</div>
+
+      <h3>${risk}</h3>
+
+      <p>${advice}</p>
+
+      <div class="news-score-details">
+        <strong>Individual Parameter Scores</strong>
+        ${rows}
+      </div>
+
+      ${singleThree ? `
+        <div class="news-alert">
+          ⚠ Single Parameter Trigger:
+          ${redParameters.join(", ")}
+        </div>
+      ` : ""}
+
+      <div class="news-safety-note">
+        <strong>Clinical Safety Notice</strong>
+        <p>
+          หากผู้ป่วยมีอาการทรุดลง หรือบุคลากรมีความกังวล
+          ให้ประเมินและรายงานทันที ไม่ว่าคะแนน NEWS2 จะเป็นเท่าใด
+          NEWS2 ไม่สามารถใช้แทนดุลยพินิจทางคลินิก
+          หรือแนวทางการตอบสนองของสถานพยาบาลได้
+        </p>
+      </div>
+    </div>
+  `;
+
+  assessmentResult.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest"
+  });
+}
+
 // ===== DIALOG CONTROL =====
 
 function renderCurrentAssessment() {
@@ -756,6 +1198,7 @@ function renderCurrentAssessment() {
   if (currentTool === "7ps") render7Ps();
   if (currentTool === "apgar") renderAPGAR();
   if (currentTool === "bmi") renderBMI();
+  if (currentTool === "news2") renderNEWS2();
 }
 
 function openAssessment(id) {
@@ -778,12 +1221,16 @@ document.getElementById("resetAssessment").addEventListener("click", () => {
   renderCurrentAssessment();
 });
 
-document.getElementById("calculateAssessment").addEventListener("click", () => {
-  if (currentTool === "gcs") calculateGCS();
-  if (currentTool === "7ps") calculate7Ps();
-  if (currentTool === "apgar") calculateAPGAR();
-  if (currentTool === "bmi") calculateBMI();
-});
+
+document.getElementById("calculateAssessment")
+  .addEventListener("click", () => {
+    if (currentTool === "gcs") calculateGCS();
+    if (currentTool === "7ps") calculate7Ps();
+    if (currentTool === "apgar") calculateAPGAR();
+    if (currentTool === "bmi") calculateBMI();
+    if (currentTool === "news2") calculateNEWS2();
+  });
+
 
 dialog.addEventListener("click", event => {
   if (event.target === dialog) dialog.close();
